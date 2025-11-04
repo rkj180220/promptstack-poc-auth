@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Auth service owns these tables
+model users {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  password_hash String?
+  avatar_url    String?
+  created_at    DateTime @default(now())
+  memberships   team_memberships[]
+  user_domains  user_domains[]
+}
+
+model teams {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  external_ref String?
+  is_active   Boolean  @default(true)
+  memberships team_memberships[]
+}
+
+model team_memberships {
+  id      String @id @default(uuid())
+  user_id String
+  team_id String
+  role    String?
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  team teams @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, team_id])
+}
+
+model domains {
+  id                String   @id @default(uuid())
+  key               String   @unique
+  name              String
+  parent_domain_id  String?
+  is_active         Boolean  @default(true)
+
+  parent domains? @relation("DomainParent", fields: [parent_domain_id], references: [id])
+  children domains[] @relation("DomainParent")
+  user_domains user_domains[]
+}
+
+model user_domains {
+  id        String @id @default(uuid())
+  user_id   String
+  domain_id String
+
+  user   users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  domain domains @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, domain_id])
+}
+

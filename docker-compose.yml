@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  auth:
+    build: .
+    container_name: promptstack-auth
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://promptstack:promptstack@db:5432/promptstack
+      - AUTH_ALLOW_DEV_HEADERS=true
+      - AUTH_JWT_SECRET_KEY=your-secret-key-change-in-production
+      - AUTH_API_CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:8000
+    depends_on:
+      - db
+    networks:
+      - promptstack-network
+
+  db:
+    image: postgres:16
+    container_name: promptstack-auth-db
+    environment:
+      - POSTGRES_USER=promptstack
+      - POSTGRES_PASSWORD=promptstack
+      - POSTGRES_DB=promptstack
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - promptstack-network
+
+volumes:
+  postgres_data:
+
+networks:
+  promptstack-network:
+    driver: bridge
+
