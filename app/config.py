@@ -45,18 +45,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore[call-arg]
-fastapi==0.111.0
-uvicorn[standard]==0.30.1
-pydantic==2.7.1
-pydantic-settings==2.2.1
-python-jose[cryptography]==3.3.0
-requests==2.32.3
-psycopg2-binary==2.9.9
-python-dotenv==1.0.1
-typing-extensions==4.12.2
-prisma==0.12.0
-passlib[bcrypt]==1.7.4
-bcrypt==4.0.1
-PyJWT==2.8.0
-email-validator==2.1.1
 

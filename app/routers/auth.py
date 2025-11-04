@@ -162,14 +162,4 @@ async def validate_token(request: schemas.ValidateTokenRequest):
 async def get_me(user=Depends(get_current_user)):
     """Get current user with context (teams and domains)"""
     return await get_user_with_context(user)
-from __future__ import annotations
-
-from fastapi import APIRouter
-
-router = APIRouter()
-
-
-@router.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "auth"}
 
