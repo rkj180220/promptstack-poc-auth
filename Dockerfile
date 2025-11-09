@@ -17,17 +17,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY prisma ./prisma
 
 # Generate Prisma client (must be done before copying app code)
-RUN prisma generate
+RUN pip install prisma && python -m prisma generate
 
 # Copy application code
 COPY . .
 
-# Create a startup script that runs migrations then starts the server
-RUN echo '#!/bin/bash\nprisma db push --skip-generate\nuvicorn app.main:app --host 0.0.0.0 --port 8001' > /app/start.sh && \
-    chmod +x /app/start.sh
-
 # Expose port
 EXPOSE 8001
 
-# Run the application
-CMD ["/app/start.sh"]
+# Start the server (migrations are handled by backend service only)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+

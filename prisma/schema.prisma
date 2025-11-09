@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Auth service owns these tables
+// Shared schema with backend - do not modify without coordinating with backend service
 model users {
   id            String   @id @default(uuid())
   email         String   @unique
@@ -15,8 +15,12 @@ model users {
   password_hash String?
   avatar_url    String?
   created_at    DateTime @default(now())
+  prompts       prompts[]
   memberships   team_memberships[]
   user_domains  user_domains[]
+  ratings       ratings[]
+  comments      comments[]
+  prompt_user_shares prompt_user_shares[]
 }
 
 model teams {
@@ -25,6 +29,7 @@ model teams {
   external_ref String?
   is_active   Boolean  @default(true)
   memberships team_memberships[]
+  prompt_team_shares prompt_team_shares[]
 }
 
 model team_memberships {
@@ -48,7 +53,138 @@ model domains {
 
   parent domains? @relation("DomainParent", fields: [parent_domain_id], references: [id])
   children domains[] @relation("DomainParent")
+
+  prompt_domain_assignments prompt_domain_assignments[]
+  prompt_domain_shares prompt_domain_shares[]
   user_domains user_domains[]
+}
+
+model tags {
+  id             String  @id @default(uuid())
+  key            String  @unique
+  name           String
+  parent_tag_id  String?
+  is_curated     Boolean @default(false)
+  is_active      Boolean @default(true)
+  alias_of_tag_id String?
+
+  parent tags? @relation("TagParent", fields: [parent_tag_id], references: [id])
+  children tags[] @relation("TagParent")
+
+  prompt_tags prompt_tags[]
+}
+
+model prompts {
+  id             String    @id @default(uuid())
+  title          String
+  description    String?
+  content        String
+  author_id      String?
+  is_public      Boolean   @default(false)
+  visibility_mode String   @default("ORG")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @default(now())
+  use_count      Int       @default(0)
+  avg_rating     Float?
+  rating_count   Int       @default(0)
+
+  author users? @relation(fields: [author_id], references: [id], onDelete: SetNull)
+
+  prompt_tags prompt_tags[]
+  prompt_domain_assignments prompt_domain_assignments[]
+  prompt_team_shares prompt_team_shares[]
+  prompt_domain_shares prompt_domain_shares[]
+  prompt_user_shares prompt_user_shares[]
+  ratings ratings[]
+  comments comments[]
+}
+
+model prompt_tags {
+  id        String @id @default(uuid())
+  prompt_id String
+  tag_id    String
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  tag tags @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@unique([prompt_id, tag_id])
+}
+
+model prompt_domain_assignments {
+  id        String @id @default(uuid())
+  prompt_id String
+  domain_id String
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  domain domains @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+
+  @@unique([prompt_id, domain_id])
+}
+
+model prompt_team_shares {
+  id        String @id @default(uuid())
+  prompt_id String
+  team_id   String
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  team teams @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  @@unique([prompt_id, team_id])
+}
+
+model prompt_domain_shares {
+  id        String @id @default(uuid())
+  prompt_id String
+  domain_id String
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  domain domains @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+
+  @@unique([prompt_id, domain_id])
+}
+
+model prompt_user_shares {
+  id        String @id @default(uuid())
+  prompt_id String
+  user_id   String
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([prompt_id, user_id])
+}
+
+model ratings {
+  id        String @id @default(uuid())
+  prompt_id String
+  user_id   String
+  rating    Int
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([prompt_id, user_id])
+}
+
+model comments {
+  id        String @id @default(uuid())
+  prompt_id String
+  user_id   String
+  content   String
+  created_at DateTime @default(now())
+
+  prompt prompts @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model audit_logs {
+  id            String   @id @default(uuid())
+  actor_id      String
+  action        String
+  resource_type String
+  resource_id   String
+  metadata      Json?
+  created_at    DateTime @default(now())
 }
 
 model user_domains {
